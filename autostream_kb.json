@@ -1,0 +1,76 @@
+{
+  "company": {
+    "name": "AutoStream",
+    "description": "AutoStream is a SaaS platform that provides automated video editing tools for content creators. It uses AI to streamline video production, add captions, enhance resolution, and automate repetitive editing tasks.",
+    "tagline": "Edit smarter. Create faster."
+  },
+  "plans": [
+    {
+      "name": "Basic Plan",
+      "price": "$29/month",
+      "features": [
+        "10 videos per month",
+        "720p resolution output",
+        "Basic AI editing tools",
+        "Email support",
+        "Cloud storage: 50GB"
+      ],
+      "best_for": "Hobbyists and beginner content creators"
+    },
+    {
+      "name": "Pro Plan",
+      "price": "$79/month",
+      "features": [
+        "Unlimited videos per month",
+        "4K resolution output",
+        "AI-powered captions (50+ languages)",
+        "Priority 24/7 customer support",
+        "Advanced AI editing suite",
+        "Cloud storage: 500GB",
+        "Custom branding & watermarks",
+        "Analytics dashboard"
+      ],
+      "best_for": "Professional YouTubers, Instagram creators, and agencies"
+    }
+  ],
+  "policies": [
+    {
+      "topic": "Refund Policy",
+      "details": "No refunds are provided after 7 days from the date of purchase. Refund requests within the first 7 days will be honored in full."
+    },
+    {
+      "topic": "Customer Support",
+      "details": "24/7 live support is available exclusively on the Pro plan. Basic plan users receive email support with a 24-hour response time."
+    },
+    {
+      "topic": "Cancellation",
+      "details": "You may cancel your subscription at any time. Your access continues until the end of the current billing period."
+    },
+    {
+      "topic": "Free Trial",
+      "details": "A 7-day free trial is available for the Pro plan. No credit card required to start."
+    },
+    {
+      "topic": "Team & Agency Plans",
+      "details": "Custom enterprise pricing is available for teams of 5 or more. Contact sales@autostream.io for a tailored quote."
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What platforms does AutoStream support?",
+      "answer": "AutoStream supports exporting to YouTube, Instagram, TikTok, Facebook, Twitter/X, and LinkedIn. Direct publishing integrations are available on the Pro plan."
+    },
+    {
+      "question": "Can I upgrade or downgrade my plan?",
+      "answer": "Yes, you can upgrade or downgrade at any time. Upgrades take effect immediately; downgrades apply at the start of the next billing cycle."
+    },
+    {
+      "question": "Does AutoStream support team collaboration?",
+      "answer": "Basic collaboration is available on Pro. For full team workspaces, contact us for an enterprise plan."
+    },
+    {
+      "question": "What video formats are supported?",
+      "answer": "AutoStream supports MP4, MOV, AVI, MKV, and WebM as input formats. Output is delivered in MP4 with H.264 or H.265 encoding."
+    }
+  ]
+}
