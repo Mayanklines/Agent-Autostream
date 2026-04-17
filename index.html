@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AutoStream — AI Sales Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0b0b11;
+    --bg2:       #111119;
+    --bg3:       #18181f;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.12);
+    --amber:     #f59e0b;
+    --amber-dim: #92600a;
+    --amber-glow:rgba(245,158,11,0.15);
+    --text:      #e8e8f0;
+    --text2:     #8b8b9e;
+    --text3:     #55556a;
+    --user-bg:   #1e1e2e;
+    --agent-bg:  #141420;
+    --green:     #10b981;
+    --blue:      #3b82f6;
+    --red:       #ef4444;
+    --radius:    14px;
+    --radius-sm: 8px;
+    --font:      'Outfit', sans-serif;
+    --mono:      'JetBrains Mono', monospace;
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; overflow: hidden; }
+
+  /* ── Layout ── */
+  .app { display: flex; height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 300px; min-width: 300px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 28px 22px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 32px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--amber);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 18px; height: 18px; }
+  .logo-name { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-tag { font-size: 10px; color: var(--amber); font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; }
+
+  .section-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.8px;
+    text-transform: uppercase; color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  /* Plans */
+  .plan-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    margin-bottom: 10px; cursor: default;
+    transition: border-color 0.2s;
+  }
+  .plan-card:hover { border-color: var(--border2); }
+  .plan-card.featured { border-color: var(--amber-dim); }
+  .plan-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .plan-name { font-weight: 600; font-size: 13px; }
+  .plan-price { font-family: var(--mono); font-size: 13px; color: var(--amber); }
+  .plan-feat { font-size: 11.5px; color: var(--text2); display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+  .plan-feat::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--amber); flex-shrink: 0; opacity: 0.6; }
+  .plan-badge { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; color: var(--amber); background: var(--amber-glow); padding: 2px 7px; border-radius: 20px; border: 1px solid var(--amber-dim); }
+
+  /* Status panel */
+  .status-panel {
+    margin-top: auto; padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .intent-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .intent-badge {
+    font-size: 11px; font-weight: 500; font-family: var(--mono);
+    padding: 3px 9px; border-radius: 20px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text2); transition: all 0.3s;
+  }
+  .intent-badge.greeting  { border-color: #3b82f660; color: #3b82f6; background: #3b82f610; }
+  .intent-badge.inquiry   { border-color: #8b5cf660; color: #a78bfa; background: #8b5cf610; }
+  .intent-badge.high_intent { border-color: #f59e0b60; color: var(--amber); background: var(--amber-glow); }
+  .intent-badge.lead_collection { border-color: #10b98160; color: #10b981; background: #10b98110; }
+
+  /* Lead progress */
+  .lead-progress { }
+  .lead-field {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .lead-field:last-child { border-bottom: none; }
+  .field-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border2); flex-shrink: 0;
+    transition: background 0.4s, box-shadow 0.4s;
+  }
+  .field-dot.filled { background: var(--green); box-shadow: 0 0 6px rgba(16,185,129,0.4); }
+  .field-dot.active { background: var(--amber); box-shadow: 0 0 6px var(--amber-glow); }
+  .field-label { font-size: 12px; color: var(--text2); flex: 1; }
+  .field-value { font-size: 11px; font-family: var(--mono); color: var(--text); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .capture-banner {
+    display: none; align-items: center; gap: 8px;
+    background: #10b98115; border: 1px solid #10b98140;
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    margin-top: 12px;
+  }
+  .capture-banner.show { display: flex; }
+  .capture-banner svg { flex-shrink: 0; color: var(--green); }
+  .capture-banner p { font-size: 12px; color: #10b981; }
+
+  /* ── Chat area ── */
+  .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  .chat-header {
+    padding: 20px 28px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .agent-info { display: flex; align-items: center; gap: 12px; }
+  .agent-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #1a1a2e, #2d2d44);
+    border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: var(--amber);
+    letter-spacing: -1px;
+    position: relative;
+  }
+  .online-dot {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); border: 2px solid var(--bg2);
+  }
+  .agent-name { font-weight: 600; font-size: 15px; }
+  .agent-role { font-size: 12px; color: var(--text2); }
+
+  .reset-btn {
+    font-family: var(--font); font-size: 12px; font-weight: 500;
+    color: var(--text3); background: transparent;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 14px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover { border-color: var(--border2); color: var(--text2); }
+
+  /* Messages */
+  .messages {
+    flex: 1; overflow-y: auto; padding: 24px 28px;
+    display: flex; flex-direction: column; gap: 18px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  .msg { display: flex; gap: 12px; animation: fadeUp 0.3s ease; max-width: 100%; }
+  .msg.user { flex-direction: row-reverse; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; margin-top: 2px;
+  }
+  .msg-avatar.agent-av { background: var(--bg3); border: 1px solid var(--border2); color: var(--amber); }
+  .msg-avatar.user-av { background: var(--amber); color: #000; font-weight: 700; }
+
+  .msg-body { max-width: 72%; display: flex; flex-direction: column; gap: 4px; }
+  .msg.user .msg-body { align-items: flex-end; }
+
+  .msg-bubble {
+    padding: 12px 16px; border-radius: 16px;
+    font-size: 14px; line-height: 1.65;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .msg.agent .msg-bubble {
+    background: var(--agent-bg); border: 1px solid var(--border);
+    border-top-left-radius: 4px; color: var(--text);
+  }
+  .msg.user .msg-bubble {
+    background: var(--amber); color: #0a0a00;
+    border-bottom-right-radius: 4px; font-weight: 500;
+  }
+
+  .msg-time { font-size: 11px; color: var(--text3); padding: 0 4px; }
+
+  /* Typing indicator */
+  .typing-indicator { display: none; }
+  .typing-indicator.show { display: flex; }
+  .typing-indicator .msg-bubble {
+    background: var(--agent-bg); border: 1px solid var(--border);
+    border-top-left-radius: 4px; padding: 14px 18px;
+    display: flex; gap: 5px; align-items: center;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+  /* Welcome */
+  .welcome {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center;
+    padding: 60px 40px; flex: 1;
+    animation: fadeUp 0.5s ease;
+  }
+  .welcome-icon {
+    width: 64px; height: 64px; border-radius: 20px;
+    background: var(--amber-glow); border: 1px solid var(--amber-dim);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .welcome-icon svg { width: 28px; height: 28px; color: var(--amber); }
+  .welcome h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .welcome p { font-size: 14px; color: var(--text2); max-width: 360px; line-height: 1.7; }
+  .welcome-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 22px; }
+  .chip {
+    font-size: 12px; font-weight: 500; padding: 7px 14px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 20px; color: var(--text2); cursor: pointer;
+    transition: all 0.2s;
+  }
+  .chip:hover { border-color: var(--amber-dim); color: var(--amber); background: var(--amber-glow); }
+
+  /* Input area */
+  .input-area {
+    padding: 16px 28px 20px; border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+  .input-wrap { flex: 1; position: relative; }
+  textarea {
+    width: 100%; resize: none; min-height: 48px; max-height: 140px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-family: var(--font); font-size: 14px; line-height: 1.5;
+    padding: 12px 48px 12px 16px;
+    outline: none; transition: border-color 0.2s;
+    scrollbar-width: thin;
+  }
+  textarea:focus { border-color: var(--amber-dim); }
+  textarea::placeholder { color: var(--text3); }
+  textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .send-btn {
+    position: absolute; right: 10px; bottom: 10px;
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--amber); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .send-btn:hover { background: #d97706; transform: scale(1.05); }
+  .send-btn:active { transform: scale(0.96); }
+  .send-btn:disabled { background: var(--bg3); cursor: not-allowed; transform: none; }
+  .send-btn svg { width: 15px; height: 15px; color: #000; }
+  .send-btn:disabled svg { color: var(--text3); }
+
+  .input-hint { font-size: 11px; color: var(--text3); margin-top: 8px; text-align: center; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  /* Error toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #ef444420; border: 1px solid #ef444450;
+    color: #ef4444; padding: 12px 18px; border-radius: var(--radius-sm);
+    font-size: 13px; display: none; z-index: 999;
+    animation: fadeUp 0.3s ease;
+  }
+  .toast.show { display: block; }
+
+  /* Responsive */
+  @media (max-width: 680px) {
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-name">AutoStream</div>
+        <div class="logo-tag">AI Video Platform</div>
+      </div>
+    </div>
+
+    <div class="section-label">Pricing Plans</div>
+
+    <div class="plan-card">
+      <div class="plan-header">
+        <div class="plan-name">Basic</div>
+        <div class="plan-price">$29<span style="font-size:10px;color:var(--text2)">/mo</span></div>
+      </div>
+      <div class="plan-feat">10 videos / month</div>
+      <div class="plan-feat">720p resolution</div>
+      <div class="plan-feat">Email support</div>
+      <div class="plan-feat">50 GB cloud storage</div>
+    </div>
+
+    <div class="plan-card featured">
+      <div class="plan-header">
+        <div class="plan-name">Pro <span class="plan-badge">Popular</span></div>
+        <div class="plan-price">$79<span style="font-size:10px;color:var(--text2)">/mo</span></div>
+      </div>
+      <div class="plan-feat">Unlimited videos</div>
+      <div class="plan-feat">4K resolution</div>
+      <div class="plan-feat">AI captions (50+ langs)</div>
+      <div class="plan-feat">24/7 priority support</div>
+      <div class="plan-feat">500 GB + analytics</div>
+    </div>
+
+    <!-- Status panel -->
+    <div class="status-panel">
+      <div class="section-label" style="margin-bottom:10px">Session Status</div>
+
+      <div class="intent-row">
+        <span style="font-size:12px;color:var(--text2)">Detected intent</span>
+        <span class="intent-badge" id="intent-badge">—</span>
+      </div>
+
+      <div class="section-label" style="margin-top:4px;margin-bottom:10px">Lead Collection</div>
+      <div class="lead-progress">
+        <div class="lead-field">
+          <div class="field-dot" id="dot-name"></div>
+          <span class="field-label">Name</span>
+          <span class="field-value" id="val-name">—</span>
+        </div>
+        <div class="lead-field">
+          <div class="field-dot" id="dot-email"></div>
+          <span class="field-label">Email</span>
+          <span class="field-value" id="val-email">—</span>
+        </div>
+        <div class="lead-field">
+          <div class="field-dot" id="dot-platform"></div>
+          <span class="field-label">Platform</span>
+          <span class="field-value" id="val-platform">—</span>
+        </div>
+      </div>
+
+      <div class="capture-banner" id="capture-banner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <p>Lead captured successfully!</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Chat area ── -->
+  <main class="chat-area">
+    <header class="chat-header">
+      <div class="agent-info">
+        <div class="agent-avatar">
+          Ar
+          <div class="online-dot"></div>
+        </div>
+        <div>
+          <div class="agent-name">Aria</div>
+          <div class="agent-role">AutoStream Sales Agent · Powered by Claude</div>
+        </div>
+      </div>
+      <button class="reset-btn" onclick="resetSession()">New session</button>
+    </header>
+
+    <div class="messages" id="messages">
+      <!-- Welcome state -->
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </div>
+        <h2>Meet Aria, your AutoStream guide</h2>
+        <p>Ask about pricing, features, or get started with a Pro trial. Aria will walk you through everything.</p>
+        <div class="welcome-chips">
+          <div class="chip" onclick="sendChip(this)">What does the Pro plan include?</div>
+          <div class="chip" onclick="sendChip(this)">How much does Basic cost?</div>
+          <div class="chip" onclick="sendChip(this)">I want to try AutoStream</div>
+          <div class="chip" onclick="sendChip(this)">What's your refund policy?</div>
+          <div class="chip" onclick="sendChip(this)">Do you support TikTok?</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Typing indicator (hidden, appended by JS) -->
+    <template id="typing-tmpl">
+      <div class="msg agent typing-indicator show">
+        <div class="msg-avatar agent-av">Ar</div>
+        <div class="msg-body">
+          <div class="msg-bubble">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <div class="input-area">
+      <div class="input-row">
+        <div class="input-wrap">
+          <textarea id="input" placeholder="Ask about pricing, features, or sign up…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <p class="input-hint">Aria may make mistakes. Verify important information before acting.</p>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API_BASE = '';  // empty = same origin (served by FastAPI)
+
+  let sessionId = null;
+  let busy = false;
+
+  const messagesEl = document.getElementById('messages');
+  const inputEl    = document.getElementById('input');
+  const sendBtn    = document.getElementById('send-btn');
+  const welcomeEl  = document.getElementById('welcome');
+  const toastEl    = document.getElementById('toast');
+
+  function now() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function sendChip(el) {
+    inputEl.value = el.textContent;
+    autoResize(inputEl);
+    sendMessage();
+  }
+
+  function appendMsg(role, text) {
+    if (welcomeEl) welcomeEl.remove();
+
+    const isAgent = role === 'agent';
+    const msg = document.createElement('div');
+    msg.className = `msg ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = `msg-avatar ${isAgent ? 'agent-av' : 'user-av'}`;
+    avatar.textContent = isAgent ? 'Ar' : 'You'[0];
+
+    const body = document.createElement('div');
+    body.className = 'msg-body';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = text;
+
+    const time = document.createElement('div');
+    time.className = 'msg-time';
+    time.textContent = now();
+
+    body.appendChild(bubble);
+    body.appendChild(time);
+    msg.appendChild(avatar);
+    msg.appendChild(body);
+    messagesEl.appendChild(msg);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return msg;
+  }
+
+  function showTyping() {
+    const tmpl = document.getElementById('typing-tmpl');
+    const clone = tmpl.content.cloneNode(true);
+    const el = clone.querySelector('.typing-indicator');
+    messagesEl.appendChild(el);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return el;
+  }
+
+  function showToast(msg, duration = 3500) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), duration);
+  }
+
+  function updateSidebar(data) {
+    // Intent badge
+    const badge = document.getElementById('intent-badge');
+    const intentMap = {
+      greeting:        'Greeting',
+      inquiry:         'Inquiry',
+      high_intent:     'High intent',
+      lead_collection: 'Collecting',
+      unknown:         'Unknown',
+    };
+    badge.textContent = intentMap[data.intent] || data.intent;
+    badge.className = 'intent-badge ' + data.intent;
+
+    // Lead fields
+    const fields = ['name', 'email', 'platform'];
+    const missing = data.missing_fields || [];
+    const info = data.lead_info || {};
+
+    fields.forEach(f => {
+      const dot = document.getElementById('dot-' + f);
+      const val = document.getElementById('val-' + f);
+      const filled = !!info[f];
+      const active = data.collecting_lead && !filled && missing[0] === f;
+      dot.className = 'field-dot' + (filled ? ' filled' : active ? ' active' : '');
+      val.textContent = info[f] ? truncate(info[f], 14) : '—';
+    });
+
+    // Capture banner
+    if (data.lead_captured) {
+      document.getElementById('capture-banner').classList.add('show');
+    }
+  }
+
+  function truncate(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
+
+  async function sendMessage() {
+    if (busy) return;
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    sendBtn.disabled = true;
+    inputEl.disabled = true;
+    busy = true;
+
+    appendMsg('user', text);
+    const typingEl = showTyping();
+
+    try {
+      const res = await fetch(`${API_BASE}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, message: text }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Server error');
+      }
+
+      const data = await res.json();
+      sessionId = data.session_id;
+      typingEl.remove();
+      appendMsg('agent', data.reply);
+      updateSidebar(data);
+    } catch (err) {
+      typingEl.remove();
+      showToast('Error: ' + err.message);
+      appendMsg('agent', 'Sorry, I encountered an error. Please try again.');
+    } finally {
+      busy = false;
+      sendBtn.disabled = false;
+      inputEl.disabled = false;
+      inputEl.focus();
+    }
+  }
+
+  async function resetSession() {
+    if (sessionId) {
+      await fetch(`${API_BASE}/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      }).catch(() => {});
+    }
+    sessionId = null;
+    messagesEl.innerHTML = '';
+
+    // Re-insert welcome
+    const w = document.createElement('div');
+    w.className = 'welcome';
+    w.id = 'welcome';
+    w.innerHTML = `
+      <div class="welcome-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </div>
+      <h2>Meet Aria, your AutoStream guide</h2>
+      <p>Ask about pricing, features, or get started with a Pro trial. Aria will walk you through everything.</p>
+      <div class="welcome-chips">
+        <div class="chip" onclick="sendChip(this)">What does the Pro plan include?</div>
+        <div class="chip" onclick="sendChip(this)">How much does Basic cost?</div>
+        <div class="chip" onclick="sendChip(this)">I want to try AutoStream</div>
+        <div class="chip" onclick="sendChip(this)">What's your refund policy?</div>
+        <div class="chip" onclick="sendChip(this)">Do you support TikTok?</div>
+      </div>`;
+    messagesEl.appendChild(w);
+
+    // Reset sidebar
+    ['name','email','platform'].forEach(f => {
+      document.getElementById('dot-' + f).className = 'field-dot';
+      document.getElementById('val-' + f).textContent = '—';
+    });
+    document.getElementById('intent-badge').textContent = '—';
+    document.getElementById('intent-badge').className = 'intent-badge';
+    document.getElementById('capture-banner').classList.remove('show');
+  }
+
+  inputEl.focus();
+</script>
+</body>
+</html>
